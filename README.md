@@ -3,7 +3,7 @@
 These are a collection of toy-size artificial neural networks built for experimentation and learning.
 
 
-###Directory:
+### Directory:
 
 #### neural_net_series.py
 
