@@ -2,8 +2,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 # Hyperparameters
-epochs = 100000
-learning_rate = 0.001
+epochs = 10000
+learning_rate = 1e-5
 
 # Build simulated data graph
 steps = 1001
@@ -31,6 +31,13 @@ def rand_walk(indx):
 
 series = np.array([rand_walk(i) for i in range(steps)]) # create array for series
 
+def set_threshold(x):
+    threshold = np.ptp(x, axis=0).astype(int)
+    return threshold
+
+# Set threshold for exploding gradients
+threshold = set_threshold(5*series)
+
 y_delta = 3 # how far ahead to predict
 x_t = np.array([series, np.roll(series, 1, axis=0), np.roll(series, 2, axis=0)]) # go back 1, then 2 steps in time
 x_t = np.transpose(x_t, (1, 2, 0)).astype(np.float32) # transpose to [steps, 1, y_delta]
@@ -49,6 +56,7 @@ W_output = np.tanh(np.random.normal(0,size=y.shape)).astype(np.float32)
 b_output = np.zeros((1, W_output.shape[0]), dtype = np.float32)
 
 def sigmoid(x):
+    clip_norm(x, threshold)
     return .5 * (1 + np.tanh(.5 * x)) # Using a tanh for numerical stability
 
 def gradient(x):
@@ -73,6 +81,11 @@ def descale(x, y):
     n = y*(np.max(x)-np.min(x)) + np.min(x)
     return n
 
+# Clip norm of gradient (in case of exploding gradients)
+def clip_norm(x, threshold):
+    delta = x*(threshold/np.maximum(x, threshold))
+    return delta
+
 total_loss = predictions = weights_1 = weights_output = []
 for i in range(epochs):
     x_n = normalize(x) # normalize before activation layer
@@ -84,7 +97,7 @@ for i in range(epochs):
     loss = np.mean(np.square(error))
 
     # Print progress
-    if (i % 1000) == 0:
+    if (i % 100) == 0:
         print("\n\nEpoch: {0}".format(i))
         print("__________________________________________")
         print("Loss: {0}".format(loss))
@@ -99,10 +112,10 @@ for i in range(epochs):
     # Update weights and bias layers
     W_output += np.dot(output_delta*-learning_rate, W_output)
     W_layer_1 += np.dot(layer_1_delta*-learning_rate, W_layer_1)
-    b_output = np.sum(output_delta, axis=0, keepdims=True)
-    b_layer_1 = np.sum(layer_1_delta, axis=0)
+    b_output = np.sum(output_delta, axis=0)/output_delta.shape[1]
+    b_layer_1 = np.sum(layer_1_delta, axis=0)/layer_1_delta.shape[1]
 
-    if (i % 10000) == 0:
+    if (i % 1000) == 0:
         weights_1.append(W_layer_1)
         weights_output.append(weights_output)
 
