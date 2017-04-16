@@ -78,7 +78,7 @@ def sigmoid(x):
 def gradient(x):
     return x*(1-x)
 
-# Normaliers
+# Normalizers
 def normalize(x):
     x_norm = (x-np.mean(x))/np.std(x)
     return x_norm
