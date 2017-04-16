@@ -1,11 +1,15 @@
+'''
+Author: Matt Shaffer
+Contact: matt@discovermatt.com
+'''
+
+
 import numpy as np
 import matplotlib.pyplot as plt
 
-# Hyperparameters
-epochs = 10000
-learning_rate = 1e-5
-
-# Build simulated data graph
+'''
+1. Build simulated data graph
+'''
 steps = 1001
 period = 1000
 amplitude = 2
@@ -31,14 +35,21 @@ def rand_walk(indx):
 
 series = np.array([rand_walk(i) for i in range(steps)]) # create array for series
 
+'''
+2. Set hyperparameters, format training data, and set weights/bias layers
+'''
 def set_threshold(x):
     threshold = np.ptp(x, axis=0).astype(int)
     return threshold
 
-# Set threshold for exploding gradients
+# Set threshold for clip_norm function
 threshold = set_threshold(5*series)
 
+# Hyperparameters
+epochs = 10000
+learning_rate = 1e-5
 y_delta = 3 # how far ahead to predict
+
 x_t = np.array([series, np.roll(series, 1, axis=0), np.roll(series, 2, axis=0)]) # go back 1, then 2 steps in time
 x_t = np.transpose(x_t, (1, 2, 0)).astype(np.float32) # transpose to [steps, 1, y_delta]
 
@@ -50,10 +61,15 @@ y = y[0+y_delta:x_t.shape[0]-y_delta]
 
 print("x shape: {0} y shape: {1}".format(x.shape,y.shape))
 
+# Single layer network with output (Y = W*x + b)
 W_layer_1 = np.tanh(np.random.normal(0,size=x.shape)).astype(np.float32)
 b_layer_1 = np.zeros((1, W_layer_1.shape[0]), dtype = np.float32)
 W_output = np.tanh(np.random.normal(0,size=y.shape)).astype(np.float32)
 b_output = np.zeros((1, W_output.shape[0]), dtype = np.float32)
+
+'''
+3. Utility functions for neural network
+'''
 
 def sigmoid(x):
     clip_norm(x, threshold)
@@ -71,8 +87,7 @@ def denormalize(x, y):
     y_denorm = y*np.std(x) + np.mean(x)
     return y_denorm
 
-
-# Min-Max Scalers
+# Min-Max Scalers (alternative to normalize functions)
 def scale(x):
     mm = (x - np.min(x))/(np.max(x)-np.min(x))
     return mm
@@ -81,10 +96,14 @@ def descale(x, y):
     n = y*(np.max(x)-np.min(x)) + np.min(x)
     return n
 
-# Clip norm of gradient (in case of exploding gradients)
+# Clip norm of gradient (to prevent exploding gradients)
 def clip_norm(x, threshold):
     delta = x*(threshold/np.maximum(x, threshold))
     return delta
+
+'''
+4. Run training loop
+'''
 
 total_loss = predictions = weights_1 = weights_output = []
 for i in range(epochs):
@@ -122,6 +141,9 @@ for i in range(epochs):
     total_loss.append(loss)
     predictions = y_hat
 
+'''
+5. Plot and display results of training
+'''
 
 plt.scatter(timeline,series)
 plt.show()
