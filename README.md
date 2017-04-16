@@ -9,4 +9,6 @@ These are a collection of toy-size artificial neural networks built for experime
 
 Uses simulated time series data to make predictions. To run:
 
+`pip install -r requirements.txt`
+
 `python3 neural_net_series.py`
